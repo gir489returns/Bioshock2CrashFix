@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35004.147
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Bioshock2CrashFix", "Bioshock2CrashFix.vcxproj", "{8EE73908-83BF-4EE8-96B7-25998FE26CD7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8EE73908-83BF-4EE8-96B7-25998FE26CD7}.Debug|x86.ActiveCfg = Debug|Win32
+		{8EE73908-83BF-4EE8-96B7-25998FE26CD7}.Debug|x86.Build.0 = Debug|Win32
+		{8EE73908-83BF-4EE8-96B7-25998FE26CD7}.Release|x86.ActiveCfg = Release|Win32
+		{8EE73908-83BF-4EE8-96B7-25998FE26CD7}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2ECFACE7-B255-44EE-8BD4-8780B6FDC2F7}
+	EndGlobalSection
+EndGlobal
