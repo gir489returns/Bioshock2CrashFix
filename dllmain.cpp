@@ -1,5 +1,7 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include <Windows.h>
+#include <fstream>
+#include <chrono>
 
 #pragma region DXGI_WRAPPER
 #ifdef _WIN64
@@ -38,6 +40,11 @@ DWORD crash_four_return;
 DWORD crash_five_failure_return;
 DWORD crash_five_return;
 
+int crash_one_times{};
+int crash_three_times{};
+int crash_four_times{};
+int crash_five_times{};
+
 bool __fastcall isReadableWritablePointer(PVOID p)
 {
 	MEMORY_BASIC_INFORMATION info;
@@ -70,6 +77,7 @@ void crash_one_fix()
 		cmp dword ptr[eax], 0
 	jmp crash_one_return
 crash_one_failure_return_label:
+		inc crash_one_times
 		jmp crash_one_failure_return
 	}
 }
@@ -88,6 +96,7 @@ void crash_three_fix()
 		mov ecx, [eax]
 	jmp crash_three_return
 crash_three_failure_return_label:
+		inc crash_three_times
 		jmp crash_three_failure_return
 	}
 }
@@ -101,10 +110,12 @@ void crash_four_fix()
 		call isReadableWritablePointer
 		test al, al
 		popad
-		jz crash_four_return_label
+		jz crash_four_failure_return_label
 		cmp[ecx+0x10], eax
-crash_four_return_label:
 	jmp crash_four_return
+crash_four_failure_return_label:
+		inc crash_four_times
+		jmp crash_four_return
 	}
 }
 
@@ -123,8 +134,21 @@ void crash_five_fix()
 		push [edi]
 	jmp crash_five_return
 crash_five_failure_return_label:
+		inc crash_five_times
 		jmp crash_five_failure_return
 	}
+}
+
+void log_crash(std::string crash_type)
+{
+	static std::ofstream log("crash.log", std::ios::app);
+
+	auto now = std::chrono::system_clock::now();
+	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+	auto timer = std::chrono::system_clock::to_time_t(now);
+	auto local_time = *std::localtime(&timer);
+
+	log << "[" << std::put_time(&local_time, "%m/%d/%Y %I:%M:%S") << ":" << std::setfill('0') << std::setw(3) << ms.count() << " " << std::put_time(&local_time, "%p") << "] Caught " << crash_type << " crash." << std::endl;
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
@@ -183,7 +207,37 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			memcpy(reverb_bytes_location, reverb_bytes_array, sizeof(reverb_bytes_array));
 			VirtualProtect(reverb_bytes_location, sizeof(reverb_bytes_array), oldProtect, &oldProtect);
 
-			ExitThread(0);
+			while (TRUE)
+			{
+				static int last_crash_one_times{}, last_crash_three_times{}, last_crash_four_times{}, last_crash_five_times{};
+
+				if (last_crash_one_times != crash_one_times)
+				{
+					log_crash("FMOD");
+					last_crash_one_times = crash_one_times;
+				}
+
+				if (last_crash_three_times != crash_three_times)
+				{
+					log_crash("ALT+TAB");
+					last_crash_three_times = crash_three_times;
+				}
+
+				if (last_crash_four_times != crash_four_times)
+				{
+					log_crash("Memory release");
+					last_crash_four_times = crash_four_times;
+				}
+
+				if (last_crash_five_times != crash_five_times)
+				{
+					log_crash("D3D11DeviceContext_End");
+					last_crash_five_times = crash_five_times;
+				}
+
+				Sleep(100);
+			}
+
 		}, nullptr, 0, nullptr);
 	}
 	return TRUE;
