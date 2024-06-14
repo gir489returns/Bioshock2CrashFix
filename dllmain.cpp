@@ -139,6 +139,7 @@ crash_five_failure_return_label:
 	}
 }
 
+#ifdef _DEBUG
 void log_crash(std::string crash_type)
 {
 	static std::ofstream log("crash.log", std::ios::app);
@@ -150,6 +151,7 @@ void log_crash(std::string crash_type)
 
 	log << "[" << std::put_time(&local_time, "%m/%d/%Y %I:%M:%S") << ":" << std::setfill('0') << std::setw(3) << ms.count() << " " << std::put_time(&local_time, "%p") << "] Caught " << crash_type << " crash." << std::endl;
 }
+#endif
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
@@ -207,6 +209,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			memcpy(reverb_bytes_location, reverb_bytes_array, sizeof(reverb_bytes_array));
 			VirtualProtect(reverb_bytes_location, sizeof(reverb_bytes_array), oldProtect, &oldProtect);
 
+#ifdef _DEBUG
 			while (TRUE)
 			{
 				static int last_crash_one_times{}, last_crash_three_times{}, last_crash_four_times{}, last_crash_five_times{};
@@ -237,7 +240,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 
 				Sleep(100);
 			}
-
+#endif
+			ExitThread(0);
 		}, nullptr, 0, nullptr);
 	}
 	return TRUE;
