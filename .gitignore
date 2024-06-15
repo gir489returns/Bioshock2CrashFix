@@ -22,6 +22,8 @@ mono_crash.*
 [Rr]elease/
 [Rr]eleases/
 [Rr]elease-DXGI/
+[Rr]elease-Logging/
+[Rr]eleases-Logging/
 x64/
 x86/
 [Ww][Ii][Nn]32/

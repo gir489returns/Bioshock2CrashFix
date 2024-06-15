@@ -2,6 +2,8 @@
 #include <Windows.h>
 #include <fstream>
 #include <chrono>
+#include <codecvt>
+#include <intrin.h>
 
 #pragma region DXGI_WRAPPER
 #ifdef _WIN64
@@ -44,6 +46,8 @@ int crash_one_times{};
 int crash_three_times{};
 int crash_four_times{};
 int crash_five_times{};
+
+#define HEX_TO_UPPER(value) "0x" << std::hex << std::uppercase << (DWORD)value << std::dec << std::nouppercase
 
 bool __fastcall isReadableWritablePointer(PVOID p)
 {
@@ -139,7 +143,7 @@ crash_five_failure_return_label:
 	}
 }
 
-#ifdef _DEBUG
+#ifdef LOGGING_ENABLED
 void log_crash(std::string crash_type)
 {
 	static std::ofstream log("crash.log", std::ios::app);
@@ -152,6 +156,26 @@ void log_crash(std::string crash_type)
 	log << "[" << std::put_time(&local_time, "%m/%d/%Y %I:%M:%S") << ":" << std::setfill('0') << std::setw(3) << ms.count() << " " << std::put_time(&local_time, "%p") << "] Caught " << crash_type << " crash." << std::endl;
 }
 #endif
+
+void error_logger_function(const wchar_t* a1, ...)
+{
+#ifdef LOGGING_ENABLED
+	wchar_t Buffer[4096];
+	va_list ArgList;
+
+	va_start(ArgList, a1);
+	vswprintf(Buffer, 4096, a1, ArgList);
+	va_end(ArgList);
+
+	std::wstring wstr(Buffer);
+	std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+	std::string str = converter.to_bytes(wstr);
+
+	std::ostringstream o;
+	o << "[ERROR_LOGGER]: message " << str << " return address: " << HEX_TO_UPPER(_ReturnAddress());
+	log_crash(o.str());
+#endif
+}
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
@@ -209,7 +233,15 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			memcpy(reverb_bytes_location, reverb_bytes_array, sizeof(reverb_bytes_array));
 			VirtualProtect(reverb_bytes_location, sizeof(reverb_bytes_array), oldProtect, &oldProtect);
 
-#ifdef _DEBUG
+			PVOID app_error_location = reinterpret_cast<PVOID>(Bioshock2HDEXE+0xB55970);
+			BYTE app_error_array[] = { 0xE9, 0x00, 0x00, 0x00, 0x00 };
+			VirtualProtect(app_error_location, sizeof(app_error_array), PAGE_EXECUTE_READWRITE, &oldProtect);
+			relativeAddress = (((DWORD)&error_logger_function) - (DWORD)app_error_location) - 5;
+			*(DWORD*)(app_error_array + 1) = relativeAddress;
+			memcpy(app_error_location, app_error_array, sizeof(app_error_array));
+			VirtualProtect(app_error_location, sizeof(app_error_array), oldProtect, &oldProtect);
+
+#ifdef LOGGING_ENABLED
 			while (TRUE)
 			{
 				static int last_crash_one_times{}, last_crash_three_times{}, last_crash_four_times{}, last_crash_five_times{};

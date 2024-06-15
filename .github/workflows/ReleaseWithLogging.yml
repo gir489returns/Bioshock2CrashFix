@@ -3,7 +3,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: MSBuild
+name: Crash Fix With Logging
 
 on:
   push:
@@ -20,7 +20,7 @@ env:
   # Configuration type to build.
   # You can convert this to a build matrix if you need coverage of multiple configuration types.
   # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-  BUILD_CONFIGURATION: Release
+  BUILD_CONFIGURATION: Release-Logging
 
 permissions:
   contents: read
@@ -43,5 +43,5 @@ jobs:
       
     - uses: actions/upload-artifact@v4
       with:
-        name: release
-        path: Release/dxgi.dll
+        name: releasewithlogging
+        path: Release-Logging/dxgi.dll
