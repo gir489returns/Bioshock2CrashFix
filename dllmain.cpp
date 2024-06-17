@@ -42,10 +42,12 @@ DWORD crash_four_return;
 DWORD crash_five_failure_return;
 DWORD crash_five_return;
 
+#ifdef LOGGING_ENABLED
 int crash_one_times{};
 int crash_three_times{};
 int crash_four_times{};
 int crash_five_times{};
+#endif
 
 #define HEX_TO_UPPER(value) "0x" << std::hex << std::uppercase << (DWORD)value << std::dec << std::nouppercase
 
@@ -81,7 +83,9 @@ void crash_one_fix()
 		cmp dword ptr[eax], 0
 	jmp crash_one_return
 crash_one_failure_return_label:
+#ifdef LOGGING_ENABLED
 		inc crash_one_times
+#endif
 		jmp crash_one_failure_return
 	}
 }
@@ -100,7 +104,9 @@ void crash_three_fix()
 		mov ecx, [eax]
 	jmp crash_three_return
 crash_three_failure_return_label:
+#ifdef LOGGING_ENABLED
 		inc crash_three_times
+#endif
 		jmp crash_three_failure_return
 	}
 }
@@ -118,7 +124,9 @@ void crash_four_fix()
 		cmp[ecx+0x10], eax
 	jmp crash_four_return
 crash_four_failure_return_label:
+#ifdef LOGGING_ENABLED
 		inc crash_four_times
+#endif
 		jmp crash_four_return
 	}
 }
@@ -138,7 +146,9 @@ void crash_five_fix()
 		push [edi]
 	jmp crash_five_return
 crash_five_failure_return_label:
+#ifdef LOGGING_ENABLED
 		inc crash_five_times
+#endif
 		jmp crash_five_failure_return
 	}
 }
@@ -172,7 +182,8 @@ void error_logger_function(const wchar_t* a1, ...)
 	std::string str = converter.to_bytes(wstr);
 
 	std::ostringstream o;
-	o << "[ERROR_LOGGER]: message " << str << " return address: " << HEX_TO_UPPER(_ReturnAddress());
+	static const auto Bioshock2HDEXE = reinterpret_cast<DWORD>(GetModuleHandle(NULL));
+	o << "[ERROR_LOGGER]: message " << str << " return address: Bioshock2HD.exe+" << HEX_TO_UPPER(_ReturnAddress() - Bioshock2HDEXE);
 	log_crash(o.str());
 #endif
 }
@@ -183,7 +194,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 	{
 		DisableThreadLibraryCalls(hModule);
 		CreateThread(nullptr, 0, [](PVOID) -> DWORD {
-			auto Bioshock2HDEXE = reinterpret_cast<DWORD>(GetModuleHandle(NULL));
+			const auto Bioshock2HDEXE = reinterpret_cast<DWORD>(GetModuleHandle(NULL));
 			crash_one_failure_return = Bioshock2HDEXE+0xC1CADB;
 			crash_one_return = Bioshock2HDEXE+0xC1C96D;
 			crash_three_failure_return = Bioshock2HDEXE+0x4FF1C8;
