@@ -43,6 +43,7 @@ DWORD crash_five_failure_return;
 DWORD crash_five_return;
 
 #ifdef LOGGING_ENABLED
+#include "StackWalker.hpp"
 int crash_one_times{};
 int crash_three_times{};
 int crash_four_times{};
@@ -182,8 +183,7 @@ void error_logger_function(const wchar_t* a1, ...)
 	std::string str = converter.to_bytes(wstr);
 
 	std::ostringstream o;
-	static const auto Bioshock2HDEXE = reinterpret_cast<DWORD>(GetModuleHandle(NULL));
-	o << "[ERROR_LOGGER]: message " << str << " return address: Bioshock2HD.exe+" << HEX_TO_UPPER(_ReturnAddress() - Bioshock2HDEXE);
+	o << "[ERROR_LOGGER]: message " << str << " Stack Trace: " << get_stack_trace();
 	log_crash(o.str());
 #endif
 }
