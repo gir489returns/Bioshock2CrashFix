@@ -5,7 +5,7 @@
 #include <codecvt>
 #include <intrin.h>
 
-#pragma region DXGI_WRAPPER
+#ifdef DXGI_WRAPPER
 #ifdef _WIN64
 #define DLLPATH "\\\\.\\GLOBALROOT\\SystemRoot\\System32\\dxgi.dll"
 #else
@@ -32,7 +32,7 @@
 #pragma comment(linker, "/EXPORT:PIXGetCaptureState=" DLLPATH ".PIXGetCaptureState")
 #pragma comment(linker, "/EXPORT:SetAppCompatStringPointer=" DLLPATH ".SetAppCompatStringPointer")
 #pragma comment(linker, "/EXPORT:UpdateHMDEmulationStatus=" DLLPATH ".UpdateHMDEmulationStatus")
-#pragma endregion
+#endif
 
 DWORD crash_one_failure_return;
 DWORD crash_one_return;
