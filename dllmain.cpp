@@ -41,6 +41,7 @@ DWORD crash_three_return;
 DWORD crash_four_return;
 DWORD crash_five_failure_return;
 DWORD crash_five_return;
+DWORD crash_six_return;
 
 #ifdef LOGGING_ENABLED
 #include "StackWalker.hpp"
@@ -48,6 +49,7 @@ int crash_one_times{};
 int crash_three_times{};
 int crash_four_times{};
 int crash_five_times{};
+int crash_six_times{};
 #endif
 
 #define HEX_TO_UPPER(value) "0x" << std::hex << std::uppercase << (DWORD)value << std::dec << std::nouppercase
@@ -154,6 +156,25 @@ crash_five_failure_return_label:
 	}
 }
 
+void crash_six_fix()
+{
+	__asm
+	{
+		mov eax, [esp+4]
+		test eax, eax
+		jz crash_six_failure_return_label
+		push ebp
+		mov ebp, esp
+		push -01
+		jmp crash_six_return
+crash_six_failure_return_label:
+#ifdef LOGGING_ENABLED
+		inc crash_six_times
+#endif
+		retn 0x14
+	}
+}
+
 #ifdef LOGGING_ENABLED
 void log_crash(std::string crash_type)
 {
@@ -202,6 +223,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			crash_four_return = Bioshock2HDEXE+0x3087B2;
 			crash_five_failure_return = Bioshock2HDEXE+0xBE17DB;
 			crash_five_return = Bioshock2HDEXE+0xBE17D5;
+			crash_six_return = Bioshock2HDEXE+0xBF3035;
 
 			DWORD oldProtect;
 			DWORD relativeAddress;
@@ -252,10 +274,19 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			memcpy(app_error_location, app_error_array, sizeof(app_error_array));
 			VirtualProtect(app_error_location, sizeof(app_error_array), oldProtect, &oldProtect);
 
+			PVOID crash_six_location = reinterpret_cast<PVOID>(Bioshock2HDEXE+0xBF3030);
+			BYTE crash_six_array[] = { 0xE9, 0x00, 0x00, 0x00, 0x00 };
+			VirtualProtect(crash_six_location, sizeof(crash_six_array), PAGE_EXECUTE_READWRITE, &oldProtect);
+			relativeAddress = ((((DWORD)&crash_six_fix)+3) - (DWORD)crash_six_location) - 5;
+			*(DWORD*)(crash_six_array + 1) = relativeAddress;
+			memcpy(crash_six_location, crash_six_array, sizeof(crash_six_array));
+			VirtualProtect(crash_six_location, sizeof(crash_six_array), oldProtect, &oldProtect);
+
 #ifdef LOGGING_ENABLED
 			while (TRUE)
 			{
-				static int last_crash_one_times{}, last_crash_three_times{}, last_crash_four_times{}, last_crash_five_times{};
+				static int last_crash_one_times{}, last_crash_three_times{}, last_crash_four_times{}, last_crash_five_times{},
+						   last_crash_six_times{};
 
 				if (last_crash_one_times != crash_one_times)
 				{
@@ -279,6 +310,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 				{
 					log_crash("D3D11DeviceContext_End");
 					last_crash_five_times = crash_five_times;
+				}
+
+				if (last_crash_six_times != crash_six_times)
+				{
+					log_crash("BinkCopyToBuffer");
+					last_crash_six_times = crash_six_times;
 				}
 
 				Sleep(100);
