@@ -157,7 +157,7 @@ crash_five_failure_return_label:
 #ifdef LOGGING_ENABLED
 void log_crash(std::string crash_type)
 {
-	static std::ofstream log("crash.log", std::ios::app);
+	static std::ofstream log("PlugIns\\ThirdParty\\Bioshock2CrashFix\\Bioshock2CrashFix.log", std::ios::app);
 
 	auto now = std::chrono::system_clock::now();
 	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
